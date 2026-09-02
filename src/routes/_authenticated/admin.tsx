@@ -62,6 +62,9 @@ function AdminPage() {
             <TabsTrigger value="bookings">การจอง</TabsTrigger>
             <TabsTrigger value="reports">แจ้งปัญหา</TabsTrigger>
             <TabsTrigger value="rooms">ห้องพัก</TabsTrigger>
+            <TabsTrigger value="tenants">ผู้เช่า</TabsTrigger>
+            <TabsTrigger value="contact">ติดต่อเรา</TabsTrigger>
+            <TabsTrigger value="notify">ส่งแจ้งเตือน</TabsTrigger>
             <TabsTrigger value="announcements">ประกาศ</TabsTrigger>
           </TabsList>
           <TabsContent value="bookings" className="mt-6">
