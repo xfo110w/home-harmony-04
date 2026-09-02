@@ -132,6 +132,8 @@ function BookingsTab() {
     });
     toast.success(approve ? "อนุมัติการจองแล้ว" : "ปฏิเสธการจองแล้ว");
     void qc.invalidateQueries({ queryKey: ["admin-bookings"] });
+    void qc.invalidateQueries({ queryKey: ["rooms"] });
+    void qc.invalidateQueries({ queryKey: ["admin-tenants"] });
   };
 
   if (isLoading) return <Loader2 className="h-6 w-6 animate-spin text-primary" />;
