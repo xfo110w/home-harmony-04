@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { Building2, Loader2 } from "lucide-react";
+import { Building2, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
