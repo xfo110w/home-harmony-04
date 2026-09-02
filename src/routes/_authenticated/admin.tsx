@@ -62,6 +62,9 @@ function AdminPage() {
             <TabsTrigger value="bookings">การจอง</TabsTrigger>
             <TabsTrigger value="reports">แจ้งปัญหา</TabsTrigger>
             <TabsTrigger value="rooms">ห้องพัก</TabsTrigger>
+            <TabsTrigger value="tenants">ผู้เช่า</TabsTrigger>
+            <TabsTrigger value="contact">ติดต่อเรา</TabsTrigger>
+            <TabsTrigger value="notify">ส่งแจ้งเตือน</TabsTrigger>
             <TabsTrigger value="announcements">ประกาศ</TabsTrigger>
           </TabsList>
           <TabsContent value="bookings" className="mt-6">
@@ -72,6 +75,15 @@ function AdminPage() {
           </TabsContent>
           <TabsContent value="rooms" className="mt-6">
             <RoomsTab />
+          </TabsContent>
+          <TabsContent value="tenants" className="mt-6">
+            <TenantsTab />
+          </TabsContent>
+          <TabsContent value="contact" className="mt-6">
+            <ContactTab />
+          </TabsContent>
+          <TabsContent value="notify" className="mt-6">
+            <NotifyTab />
           </TabsContent>
           <TabsContent value="announcements" className="mt-6">
             <AnnouncementsTab />
@@ -440,5 +452,213 @@ function AnnouncementsTab() {
         </div>
       )}
     </div>
+  );
+}
+
+function useTenants() {
+  return useQuery({
+    queryKey: ["admin-tenants"],
+    queryFn: async () => {
+      const [{ data: profiles, error: pErr }, { data: roles }, { data: bookings }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, full_name, phone, email, created_at")
+          .order("created_at", { ascending: false }),
+        supabase.from("user_roles").select("user_id, role"),
+        supabase
+          .from("bookings")
+          .select("user_id, status, created_at, rooms(room_code, floor)")
+          .eq("status", "approved"),
+      ]);
+      if (pErr) throw pErr;
+      return (profiles ?? []).map((p) => ({
+        ...p,
+        roles: (roles ?? []).filter((r) => r.user_id === p.id).map((r) => r.role),
+        rooms: (bookings ?? [])
+          .filter((b) => b.user_id === p.id)
+          .map((b) => b.rooms?.room_code)
+          .filter(Boolean) as string[],
+      }));
+    },
+  });
+}
+
+function TenantsTab() {
+  const { data, isLoading } = useTenants();
+
+  if (isLoading) return <Loader2 className="h-6 w-6 animate-spin text-primary" />;
+  if (!data?.length)
+    return <p className="rounded-xl bg-muted p-5 text-sm text-muted-foreground">ยังไม่มีสมาชิกในระบบ</p>;
+
+  return (
+    <div className="space-y-3">
+      {data.map((t) => (
+        <div key={t.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-semibold text-foreground">{t.full_name ?? "ไม่ระบุชื่อ"}</p>
+            <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-foreground">
+              {t.roles.includes("admin") ? "ผู้ดูแล" : "ผู้เช่า"}
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t.email ?? "-"} • {t.phone ?? "ไม่ระบุเบอร์โทร"}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            ห้องที่พัก: {t.rooms.length ? t.rooms.join(", ") : "ยังไม่มีห้องที่อนุมัติ"}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            สมัครเมื่อ {new Date(t.created_at).toLocaleString("th-TH", { dateStyle: "medium" })}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ContactTab() {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-contact"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contact_messages")
+        .select("id, name, email, phone, subject, message, is_read, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const markRead = async (id: string, is_read: boolean) => {
+    const { error } = await supabase.from("contact_messages").update({ is_read }).eq("id", id);
+    if (error) {
+      toast.error("อัปเดตไม่สำเร็จ: " + error.message);
+      return;
+    }
+    void qc.invalidateQueries({ queryKey: ["admin-contact"] });
+  };
+
+  if (isLoading) return <Loader2 className="h-6 w-6 animate-spin text-primary" />;
+  if (!data?.length)
+    return <p className="rounded-xl bg-muted p-5 text-sm text-muted-foreground">ยังไม่มีข้อความติดต่อ</p>;
+
+  return (
+    <div className="space-y-3">
+      {data.map((m) => (
+        <div key={m.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-semibold text-foreground">
+                {m.is_read ? "" : "🔵 "}
+                {m.subject}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {m.name} • {m.email}
+                {m.phone ? ` • ${m.phone}` : ""}
+              </p>
+            </div>
+            <button
+              onClick={() => markRead(m.id, !m.is_read)}
+              className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted"
+            >
+              {m.is_read ? "ทำเป็นยังไม่อ่าน" : "ทำเป็นอ่านแล้ว"}
+            </button>
+          </div>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">{m.message}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {new Date(m.created_at).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" })}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function NotifyTab() {
+  const { data: tenants } = useTenants();
+  const [target, setTarget] = useState("all");
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !content.trim()) {
+      toast.error("กรุณากรอกหัวข้อและข้อความ");
+      return;
+    }
+    const recipients =
+      target === "all" ? (tenants ?? []).map((t) => t.id) : [target];
+    if (!recipients.length) {
+      toast.error("ยังไม่มีผู้รับในระบบ");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.from("notifications").insert(
+      recipients.map((id) => ({ user_id: id, title: title.trim(), content: content.trim() })),
+    );
+    setBusy(false);
+    if (error) {
+      toast.error("ส่งแจ้งเตือนไม่สำเร็จ: " + error.message);
+      return;
+    }
+    toast.success(`ส่งแจ้งเตือนถึง ${recipients.length} คนแล้ว`);
+    setTitle("");
+    setContent("");
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground" htmlFor="n-target">
+          ส่งถึง
+        </label>
+        <select
+          id="n-target"
+          value={target}
+          onChange={(e) => setTarget(e.target.value)}
+          className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground"
+        >
+          <option value="all">ผู้เช่าทุกคน</option>
+          {(tenants ?? []).map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.full_name ?? t.email ?? t.id}
+              {t.rooms.length ? ` (ห้อง ${t.rooms.join(", ")})` : ""}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground" htmlFor="n-title">
+          หัวข้อ
+        </label>
+        <input
+          id="n-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full rounded-lg border border-input bg-background px-4 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+        />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground" htmlFor="n-content">
+          ข้อความ
+        </label>
+        <textarea
+          id="n-content"
+          rows={4}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="w-full rounded-lg border border-input bg-background px-4 py-2.5 outline-none focus:ring-2 focus:ring-ring"
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={busy}
+        className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+      >
+        {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+        ส่งแจ้งเตือน
+      </button>
+    </form>
   );
 }

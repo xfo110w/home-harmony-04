@@ -191,6 +191,13 @@ function AuthPage() {
           >
             เข้าสู่ระบบด้วย Google
           </button>
+
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            เป็นเจ้าหน้าที่หอพัก?
+            <Link to="/admin-login" className="ml-1 font-semibold text-primary underline-offset-2 hover:underline">
+              เข้าสู่ระบบผู้ดูแล
+            </Link>
+          </p>
         </div>
       </div>
     </div>
