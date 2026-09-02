@@ -282,6 +282,7 @@ function RoomsTab() {
     }
     toast.success("บันทึกแล้ว");
     void qc.invalidateQueries({ queryKey: ["admin-rooms"] });
+    void qc.invalidateQueries({ queryKey: ["rooms"] });
   };
 
   if (isLoading) return <Loader2 className="h-6 w-6 animate-spin text-primary" />;
