@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { MapPin, Phone, Mail, Clock, MessageCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
