@@ -34,7 +34,7 @@ const RoomDetailModal = ({ open, onClose, room, onBooked }: RoomDetailModalProps
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % roomImages.length);
   const prevImage = () => setCurrentImage((prev) => (prev - 1 + roomImages.length) % roomImages.length);
 
-  const status = statusLabels[room.status];
+  const status = statusLabels[room.status] ?? statusLabels["available"]!;
   const deposit = room.price * 2;
   const total = room.price + deposit + SECURITY_FEE;
 

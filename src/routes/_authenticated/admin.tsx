@@ -262,7 +262,7 @@ function RoomsTab() {
     },
   });
 
-  const update = async (id: string, patch: Record<string, unknown>) => {
+  const update = async (id: string, patch: { status?: string; price?: number }) => {
     const { error } = await supabase.from("rooms").update(patch).eq("id", id);
     if (error) {
       toast.error("อัปเดตไม่สำเร็จ: " + error.message);

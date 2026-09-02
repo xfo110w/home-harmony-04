@@ -38,7 +38,7 @@ function ReportPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [roomNumber, setRoomNumber] = useState("");
-  const [category, setCategory] = useState(categories[0]);
+  const [category, setCategory] = useState<string>(categories[0]!);
   const [detail, setDetail] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);

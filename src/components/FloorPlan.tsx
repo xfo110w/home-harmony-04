@@ -42,8 +42,8 @@ const FloorPlan = () => {
   }, []);
 
   const floors = Array.from(new Set(rooms.map((r) => r.floor))).sort((a, b) => a - b);
-  const maxFloor = floors.length ? floors[floors.length - 1] : 1;
-  const minFloor = floors.length ? floors[0] : 1;
+  const maxFloor = floors[floors.length - 1] ?? 1;
+  const minFloor = floors[0] ?? 1;
   const floorRooms = rooms.filter((r) => r.floor === currentFloor);
   const half = Math.ceil(floorRooms.length / 2);
   const leftRooms = floorRooms.slice(0, half);
