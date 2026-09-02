@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 import RoomDetailModal from "@/components/RoomDetailModal";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,22 +25,27 @@ const statusColors: Record<RoomStatus, string> = {
 const FloorPlan = () => {
   const [currentFloor, setCurrentFloor] = useState(1);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const load = async () => {
-    const { data } = await supabase
-      .from("rooms")
-      .select("id, room_code, floor, number, status, price, size")
-      .order("floor")
-      .order("number");
-    setRooms((data ?? []) as Room[]);
-    setLoading(false);
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["rooms"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("rooms")
+        .select("id, room_code, floor, number, status, price, size")
+        .order("floor")
+        .order("number");
+      return (data ?? []) as Room[];
+    },
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000,
+  });
+
+  const rooms = data ?? [];
+  const loading = isLoading;
+  const load = () => {
+    void refetch();
   };
 
-  useEffect(() => {
-    void load();
-  }, []);
 
   const floors = Array.from(new Set(rooms.map((r) => r.floor))).sort((a, b) => a - b);
   const maxFloor = floors[floors.length - 1] ?? 1;
