@@ -76,6 +76,15 @@ function AdminPage() {
           <TabsContent value="rooms" className="mt-6">
             <RoomsTab />
           </TabsContent>
+          <TabsContent value="tenants" className="mt-6">
+            <TenantsTab />
+          </TabsContent>
+          <TabsContent value="contact" className="mt-6">
+            <ContactTab />
+          </TabsContent>
+          <TabsContent value="notify" className="mt-6">
+            <NotifyTab />
+          </TabsContent>
           <TabsContent value="announcements" className="mt-6">
             <AnnouncementsTab />
           </TabsContent>
