@@ -91,6 +91,14 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary px-4 py-12">
       <div className="w-full max-w-md">
+        <Link
+          to="/"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          กลับหน้าหลัก
+        </Link>
+
         <Link to="/" className="mb-6 flex items-center justify-center gap-2 text-primary">
           <Building2 className="h-8 w-8" />
           <span className="font-prompt text-2xl font-bold">DORMITORYNAME</span>
